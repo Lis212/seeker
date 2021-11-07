@@ -9,8 +9,19 @@ import java.util.Map;
 import java.util.regex.Pattern;
 
 public class Lemmatizator {
+    private LuceneMorphology englishMorphology;
+    private LuceneMorphology russianMorphology;
 
-    public static Map<String, Integer> getLemma(String input) throws IOException {
+    public Lemmatizator() {
+        try {
+            englishMorphology = new EnglishLuceneMorphology();
+            russianMorphology = new RussianLuceneMorphology();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public Map<String, Integer> getLemma(String input) throws IOException {
         LuceneMorphology lm;
 
         Map<String, Integer> result = new HashMap<>();
@@ -30,13 +41,7 @@ public class Lemmatizator {
     }
 
     public String getOneLemma(String input) throws IOException {
-        LuceneMorphology lm = null;
-        char c = input.charAt(0);
-        if (Character.UnicodeBlock.of(c).equals(Character.UnicodeBlock.CYRILLIC)) {
-            lm = new RussianLuceneMorphology();
-        } else if (Character.UnicodeBlock.of(c).equals(Character.UnicodeBlock.BASIC_LATIN)) {
-            lm = new EnglishLuceneMorphology();
-        }
+        LuceneMorphology lm = getMorphology(input);
         List<String> normalForms = lm.getNormalForms(input.toLowerCase());
         if (checkWord(normalForms.get(0))) {
             return normalForms.get(0);
@@ -45,7 +50,7 @@ public class Lemmatizator {
         }
     }
 
-    private static boolean checkWord(String input) throws IOException {
+    private boolean checkWord(String input) throws IOException {
         LuceneMorphology lm = getMorphology(input);
         if (lm == null) return false;
         List<String> morphInfo = lm.getMorphInfo(input);
@@ -56,13 +61,13 @@ public class Lemmatizator {
         return true;
     }
 
-    private static LuceneMorphology getMorphology(String input) throws IOException {
+    private LuceneMorphology getMorphology(String input) throws IOException {
         Pattern russian = Pattern.compile("^[а-яА-ЯёЁ]+$");
         Pattern english = Pattern.compile("^[a-zA-Z]+$");
         if (russian.matcher(input).find()) {
-            return new RussianLuceneMorphology();
+            return russianMorphology;
         } else if (english.matcher(input).find()) {
-            return new EnglishLuceneMorphology();
+            return englishMorphology;
         } else {
             return null;
         }

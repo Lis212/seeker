@@ -13,10 +13,10 @@ public class DBConnection {
                 connection = DriverManager.getConnection(
                         "jdbc:postgresql://localhost:5432/" + dbName +
                                 "?user=" + dbUser + "&password=" + dbPass);
-                connection.createStatement().execute("DROP TABLE IF EXISTS index");
-                connection.createStatement().execute("DROP TABLE IF EXISTS page");
-                connection.createStatement().execute("DROP TABLE IF EXISTS field");
-                connection.createStatement().execute("DROP TABLE IF EXISTS lemma");
+//                connection.createStatement().execute("DROP TABLE IF EXISTS index");
+//                connection.createStatement().execute("DROP TABLE IF EXISTS page");
+//                connection.createStatement().execute("DROP TABLE IF EXISTS field");
+//                connection.createStatement().execute("DROP TABLE IF EXISTS lemma");
 
                 connection.createStatement().execute("CREATE TABLE IF NOT EXISTS page(" +
                         "id BIGSERIAL PRIMARY KEY NOT NULL, " +
@@ -55,7 +55,7 @@ public class DBConnection {
 
     public static int insertToPage(String path, int code, String content) {
         String sql = "INSERT INTO page(path, code, content) " +
-                "VALUES (?, ?, ?) RETURNING id";
+                "VALUES (?, ?, ?) ON CONFLICT (path) DO NOTHING RETURNING id";
         try (PreparedStatement ps = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             ps.setString(1, path);
             ps.setInt(2, code);

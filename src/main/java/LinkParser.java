@@ -50,14 +50,19 @@ public class LinkParser extends RecursiveAction {
                 int currentPageId;
                 currentPageId = DBConnection.insertToPage(urlToDB, statusCodeToDB, currentDoc.toString());
                 if (currentPageId != 0) {
-                    String bigSql = generateBigSql(wordsFromTitle, currentPageId);
-                    DBConnection.multiInsertOrUpdateToIndex(bigSql);
-                    bigSql = generateBigSql(wordsFromBody, currentPageId);
-                    DBConnection.multiInsertOrUpdateToIndex(bigSql);
+                    String bigSql;
+                    if (!wordsFromTitle.isEmpty()) {
+                        bigSql = generateBigSql(wordsFromTitle, currentPageId);
+                        DBConnection.multiInsertOrUpdateToIndex(bigSql);
+                    }
+                    if (!wordsFromBody.isEmpty()) {
+                        bigSql = generateBigSql(wordsFromBody, currentPageId);
+                        DBConnection.multiInsertOrUpdateToIndex(bigSql);
+                    }
                 }
             }
         } catch (IOException e) {
-            System.out.println(e.getMessage());
+//            System.out.println(e.getMessage());
         }
 
     }
@@ -89,7 +94,7 @@ public class LinkParser extends RecursiveAction {
                     //  .userAgent("Mozilla/5.0 (Windows; U; WindowsNT 5.1; en-US; rv1.8.1.6) Gecko/20070725 Firefox/2.0.0.6")
                     //  .referrer("http://www.google.com")
                     .ignoreHttpErrors(false)
-                    .timeout(10 * 1000)
+                    .timeout(30 * 1000)
                     .ignoreContentType(true)
                     .get();
             Thread.sleep(500);
@@ -101,7 +106,7 @@ public class LinkParser extends RecursiveAction {
             }
             DBConnection.insertToPage(errorUrl, h.getStatusCode(), h.getLocalizedMessage());
         } catch (IOException | InterruptedException e) {
-            System.out.println(e.getMessage() + " URL " + url);
+//            System.out.println(e.getMessage() + " URL " + url);
         }
         return new Document("");
     }
@@ -126,12 +131,13 @@ public class LinkParser extends RecursiveAction {
     }
 
     private Map<String, Integer> getWords(Elements elements) {
+        Lemmatizator lemmatizator = new Lemmatizator();
         Map<String, Integer> lemma = new HashMap<>();
         for (Element element : elements) {
             String newS = element.text().replaceAll("[^А-Яа-яёЁA-Za-z]+", " ").trim();
             Map<String, Integer> currentWords = null;
             try {
-                currentWords = Lemmatizator.getLemma(newS);
+                currentWords = lemmatizator.getLemma(newS);
             } catch (IOException e) {
                 e.printStackTrace();
             }
